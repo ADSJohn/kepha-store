@@ -1,48 +1,61 @@
-# kepha-store Project
 
-This project uses Quarkus, the Supersonic Subatomic Java Framework.
+# Kepha Store
 
-If you want to learn more about Quarkus, please visit its website: https://quarkus.io/ .
+O Kepha Store é uma API RESTful que fornece um serviço de carrinho
+de compras, recebendo ordens de compra postadas pelos clientes . Aqui,
+é feito o CRUD de todas as entidades, utilizando o banco de dados 
+PostgreSQL.
 
-## Running the application in dev mode
+Com a implementação de um serviço Cron utilizando quartz que fica
+executando em background fazendo uma busca de um em um minuto no banco de dados
+especificamente na tabela de orders verificando as ordens que
+estao em status de WAITING (Aguardando) atualizando para o status
+AUTHORIZED (Atualizado).
 
-You can run your application in dev mode that enables live coding using:
-```shell script
-./mvnw compile quarkus:dev
+```ts
+    @Transactional
+    @Scheduled(cron = "{cron.expr}", identity = "My service cron")
+    public void schenduler() {
+        List<Order> orderWaiting = orderRepository.findByStatus(OrderStatus.WAITING);
+
+        for (Order order : orderWaiting) {
+            System.out.println("Id:" + order.id + " Created: " + order.created_at + " Status: " + order.status);
+            order.status = order.status.AUTHORIZED;
+            System.out.println(" AUTHORIZED: " + Instant.now());
+        }
+    }
 ```
+Para saber mais sobre o serviço Cron e Quartz, acesse: https://quarkus.io/guides/quartz
 
-> **_NOTE:_**  Quarkus now ships with a Dev UI, which is available in dev mode only at http://localhost:8080/q/dev/.
 
-## Packaging and running the application
+## Tecnologias utilizadas
 
-The application can be packaged using:
-```shell script
-./mvnw package
+- [Java](ttps://www.java.com/)
+- [Quarkus](https://quarkus.io/)
+- [PostgreSQL](https://www.postgresql.org/)
+- [Docker](https://www.docker.com/)
+
+## Dependências
+
+- hibernate-orm-panache
+- hibernate-validator
+- smallrye-openapi
+- jdbc-postgresql
+- quartz
+- resteasy-jsonb
+- resteasy
+- security-jpa
+- smallrye-jwt
+- lombok         
+- flyway
+
+## Executando o projeto
+
+Com o terminal aberto na pasta do projeto e com o docker executando, digite o seguinte comando:
+
+```bash
+    docker-compose up
 ```
-It produces the `quarkus-run.jar` file in the `target/quarkus-app/` directory.
-Be aware that it’s not an _über-jar_ as the dependencies are copied into the `target/quarkus-app/lib/` directory.
+Assim, serão gerados as imagens do PostgreSQL, Kaycloak, e da aplicação, e o container da aplicação.
+Para realizar os testes da API, acesse: http://localhost:8080/q/swagger-ui/
 
-The application is now runnable using `java -jar target/quarkus-app/quarkus-run.jar`.
-
-If you want to build an _über-jar_, execute the following command:
-```shell script
-./mvnw package -Dquarkus.package.type=uber-jar
-```
-
-The application, packaged as an _über-jar_, is now runnable using `java -jar target/*-runner.jar`.
-
-## Creating a native executable
-
-You can create a native executable using: 
-```shell script
-./mvnw package -Pnative
-```
-
-Or, if you don't have GraalVM installed, you can run the native executable build in a container using: 
-```shell script
-./mvnw package -Pnative -Dquarkus.native.container-build=true
-```
-
-You can then execute your native executable with: `./target/kepha-store-1.0.0-SNAPSHOT-runner`
-
-If you want to learn more about building native executables, please consult https://quarkus.io/guides/maven-tooling.
